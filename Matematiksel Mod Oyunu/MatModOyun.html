@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mod Oyunu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-family: 'Pacifico', cursive;
+      font-size: 48px;
+      color: #f5f5f5;
+      margin-bottom: 30px;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    .counter {
+      font-size: 60px;
+      margin: 20px 0;
+      animation: slideIn 1s ease-in-out;
+    }
+
+    select, input, button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 10px;
+      border-radius: 15px;
+      border: 2px solid #fff;
+      background-color: rgba(255, 255, 255, 0.3);
+      color: white;
+      cursor: pointer;
+      transition: 0.3s ease-in-out;
+    }
+
+    select:focus, input:focus, button:focus {
+      outline: none;
+      background-color: rgba(255, 255, 255, 0.6);
+    }
+
+    button:hover {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    #controls button {
+      margin-top: 20px;
+    }
+
+    #start-screen {
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #f5f5f5;
+    }
+
+    #end-buttons {
+      display: none;
+      margin-top: 20px;
+    }
+
+    #signature {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      font-family: 'Pacifico', cursive;
+      font-size: 20px;
+      color: #666;
+    }
+
+    #logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 80px;
+      height: auto;
+      animation: logoAnimation 2s ease-in-out;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(-50px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      0% { opacity: 0; transform: translateX(-50px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes logoAnimation {
+      0% { opacity: 0; transform: scale(0.5); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Night Mode */
+    .night-mode {
+      background: #121212;
+      color: #f0f0f0;
+    }
+
+    .night-mode select, .night-mode input, .night-mode button {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-color: #444;
+    }
+
+    /* Fix for game screen */
+    #game {
+      display: none;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+  </style>
+</head>
+<body>
+  <audio id="bg-music" src="music.mp3" loop></audio>
+  <img src="logo.png" id="logo" alt="Logo">
+  <div id="signature">Kağan Akyürek</div>
+
+  <h1>Mod Oyunu</h1>
+
+  <div id="start-screen">
+    <p>Hedef sayıyı seç:</p>
+    <select id="level-select">
+      <option value="26">Kolay (26)</option>
+      <option value="32">Orta (32)</option>
+      <option value="54">Zor (54)</option>
+    </select><br><br>
+
+    <p>Rakip seç:</p>
+    <select id="mode-select" onchange="toggleNameInputs()">
+      <option value="cpu">Bilgisayara Karşı</option>
+      <option value="pvp">2 Oyunculu</option>
+    </select><br><br>
+
+    <div id="name-inputs" style="display:none;">
+      <p>Oyuncu 1 adı:</p>
+      <input type="text" id="player1-name" placeholder="Oyuncu 1"><br>
+      <p>Oyuncu 2 adı:</p>
+      <input type="text" id="player2-name" placeholder="Oyuncu 2">
+    </div><br>
+
+    <button onclick="startGame()">Oyunu Başlat</button>
+  </div>
+
+  <div id="game">
+    <div class="counter" id="counter">1</div>
+    <div id="controls">
+      <button id="btn1" onclick="playerMove(1)">+1</button>
+      <button id="btn2" onclick="playerMove(2)">+2</button>
+      <br>
+      <button onclick="goToStart()">Ana Ekrana Dön</button>
+    </div>
+    <div id="message"></div>
+    <div id="end-buttons">
+      <button onclick="startGame()">Tekrar Oyna</button>
+      <button onclick="goToStart()">Ana Ekrana Dön</button>
+    </div>
+  </div>
+
+  <script>
+    let currentNumber = 1;
+    let maxNumber = 20;
+    let mode = "cpu";
+    let currentPlayer = 1;
+    let player1 = "Oyuncu 1";
+    let player2 = "Oyuncu 2";
+
+    function toggleNameInputs() {
+      const mode = document.getElementById('mode-select').value;
+      document.getElementById('name-inputs').style.display = mode === 'pvp' ? 'block' : 'none';
+    }
+
+    function startGame() {
+      maxNumber = parseInt(document.getElementById('level-select').value);
+      mode = document.getElementById('mode-select').value;
+      currentNumber = 1;
+      currentPlayer = 1;
+
+      if (mode === "pvp") {
+        const name1 = document.getElementById('player1-name').value.trim();
+        const name2 = document.getElementById('player2-name').value.trim();
+        player1 = name1 !== "" ? name1 : "Oyuncu 1";
+        player2 = name2 !== "" ? name2 : "Oyuncu 2";
+      }
+
+      updateDisplay();
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
+      document.getElementById('controls').style.display = 'block';
+      document.getElementById('end-buttons').style.display = 'none';
+      document.getElementById('message').innerText = mode === "pvp" ? `${player1}'in sırası` : "Senin sıran";
+      document.getElementById('bg-music').play();
+      updateButtons();
+    }
+
+    function goToStart() {
+      document.getElementById('game').style.display = 'none';
+      document.getElementById('start-screen').style.display = 'block';
+    }
+
+    function playerMove(add) {
+      if (currentNumber + add > maxNumber) return;
+      currentNumber += add;
+      updateDisplay();
+      updateButtons();
+
+      if (currentNumber === maxNumber) {
+        if (mode === "cpu") {
+          document.getElementById('message').innerText = "Sen kaybettin!";
+        } else {
+          const loser = currentPlayer === 1 ? player1 : player2;
+          document.getElementById('message').innerText = `${loser} kaybetti!`;
+        }
+        document.getElementById('controls').style.display = 'none';
+        document.getElementById('end-buttons').style.display = 'block';
+        return;
+      }
+
+      if (mode === "cpu") {
+        document.getElementById('message').innerText = "Bilgisayar düşünüyor...";
+        setTimeout(aiMove, 500);
+      } else {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        const next = currentPlayer === 1 ? player1 : player2;
+        document.getElementById('message').innerText = `${next}'in sırası`;
+      }
+    }
+
+    function aiMove() {
+      let add;
+      const winningMoves = [];
+      for (let i = maxNumber - 3; i > 0; i -= 3) {
+        winningMoves.unshift(i);
+      }
+      let nextTarget = winningMoves.find(n => n > currentNumber);
+      if (nextTarget !== undefined) {
+        let diff = nextTarget - currentNumber;
+        add = diff <= 2 ? diff : Math.random() < 0.5 ? 1 : 2;
+      } else {
+        add = Math.random() < 0.5 ? 1 : 2;
+      }
+
+      if (currentNumber + add > maxNumber) {
+        add = 1;
+      }
+
+      currentNumber += add;
+      updateDisplay();
+      updateButtons();
+
+      if (currentNumber === maxNumber) {
+        document.getElementById('message').innerText = "Bilgisayar kaybetti, kazandın!";
+        document.getElementById('controls').style.display = 'none';
+        document.getElementById('end-buttons').style.display = 'block';
+      } else {
+        document.getElementById('message').innerText = "Senin sıran";
+      }
+    }
+
+    function updateDisplay() {
+      document.getElementById('counter').innerText = currentNumber;
+    }
+
+    function updateButtons() {
+      document.getElementById('btn1').disabled = currentNumber + 1 > maxNumber;
+      document.getElementById('btn2').disabled = currentNumber + 2 > maxNumber;
+    }
+  </script>
+</body>
+</html>
